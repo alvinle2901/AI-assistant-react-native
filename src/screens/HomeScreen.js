@@ -5,26 +5,28 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Alert
 } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen'
-import { useNavigation } from '@react-navigation/native'
 import Voice from '@react-native-community/voice'
 
 import Features from '../components/Features'
 import { dummyMessages } from '../constants'
+import { apiCall } from '../api/openAI'
 
 function HomeScreen() {
-  const navigation = useNavigation()
 
-  const [messages, setMessages] = useState(dummyMessages)
+  const [messages, setMessages] = useState([])
   const [recording, setRecording] = useState(true)
   const [loading, setLoading] = useState(false)
   const [speaking, setSpeaking] = useState(true)
   const [result, setResult] = useState('')
+
+  const scrollViewRef = useRef()
 
   const speechStartHandler = (e) => {}
 
@@ -48,11 +50,37 @@ function HomeScreen() {
     }
   }
 
+  const fetchResponse = () => {
+    if (result.trim().length>0) {
+      let newMessages = [...messages]
+      newMessages.push({role:'user', content: result.trim()})
+      setMessages([...newMessages])
+      updateScrollView();
+      setLoading(true)
+
+      apiCall(result.trim(), messages).then(res =>{
+        if (res.success) {
+          setMessages([...res.data])
+          setResult('')
+        } else {
+          Alert.alert('Error', res.msg)
+        }
+      })
+    }
+  }
+
+  const updateScrollView = () => {
+    setTimeout(() => {
+      ScrollViewRef?.current?.scrollToEnd({animated: true})
+    })
+  }
+
   const stopRecording = async () => {
     try {
       await Voice.stop
       setRecording(false)
       //fetch response
+      fetchResponse()
     } catch (e) {
       console.log(e)
     }
@@ -97,11 +125,11 @@ function HomeScreen() {
             </Text>
 
             <View
-              style={{ height: hp(62) }}
+              style={{ height: hp(70) }}
               className="bg-neutral-200 rounded-3xl p-4"
             >
               <ScrollView
-                // ref={scrollViewRef}
+                ref={scrollViewRef}
                 bounces={false}
                 className="space-y-4"
                 showsVerticalScrollIndicator={false}

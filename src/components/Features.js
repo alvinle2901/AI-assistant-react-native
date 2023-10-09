@@ -7,7 +7,7 @@ import {
 
 export default function Features() {
     return (
-        <View style={{ height: wp(60) }} className="space-y-4">
+        <View style={{ height: wp(60) }} className="space-y-4 flex-1">
             <Text
                 style={{ fontSize: wp(6.5) }}
                 className="font-semibold text-gray-700"
