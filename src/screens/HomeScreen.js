@@ -6,22 +6,76 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen'
 import { useNavigation } from '@react-navigation/native'
+import Voice from '@react-native-community/voice'
 
 import Features from '../components/Features'
 import { dummyMessages } from '../constants'
 
 function HomeScreen() {
   const navigation = useNavigation()
+
   const [messages, setMessages] = useState(dummyMessages)
   const [recording, setRecording] = useState(true)
   const [loading, setLoading] = useState(false)
   const [speaking, setSpeaking] = useState(true)
+  const [result, setResult] = useState('')
+
+  const speechStartHandler = (e) => {}
+
+  const speechEndHandler = (e) => {
+    setRecording(false)
+  }
+
+  const speechResultsHandler = (e) => {
+    const text = e.value[0]
+    setResult(text)
+  }
+
+  const speechErrorHandler = (e) => {}
+
+  const startRecording = async () => {
+    setRecording(true)
+    try {
+      await Voice.start(en - GB)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  const stopRecording = async () => {
+    try {
+      await Voice.stop
+      setRecording(false)
+      //fetch response
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  const clear = () => {
+    setMessages([])
+  }
+
+  const stopSpeaking = () => {
+    setSpeaking(false)
+  }
+
+  useEffect(() => {
+    Voice.onSpeechStart = speechStartHandler
+    Voice.onSpeechEnd = speechEndHandler
+    Voice.onSpeechResults = speechResultsHandler
+    Voice.onSpeechError = speechErrorHandler
+
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners)
+    }
+  })
 
   return (
     <View className="flex-1 bg-white">
@@ -43,7 +97,7 @@ function HomeScreen() {
             </Text>
 
             <View
-              style={{ height: hp(58) }}
+              style={{ height: hp(62) }}
               className="bg-neutral-200 rounded-3xl p-4"
             >
               <ScrollView
@@ -126,7 +180,7 @@ function HomeScreen() {
               style={{ width: hp(10), height: hp(10) }}
             />
           ) : recording ? (
-            <TouchableOpacity className="space-y-2">
+            <TouchableOpacity className="space-y-2" onPress={stopRecording}>
               {/* recording stop button */}
               <Image
                 className="rounded-full"
@@ -135,7 +189,7 @@ function HomeScreen() {
               />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={startRecording}>
               {/* recording start button */}
               <Image
                 className="rounded-full"
@@ -146,7 +200,7 @@ function HomeScreen() {
           )}
           {messages.length > 0 && (
             <TouchableOpacity
-              // onPress={clear}
+              onPress={clear}
               className="bg-neutral-400 rounded-3xl p-2 absolute right-10"
             >
               <Text className="text-white font-semibold">Clear</Text>
@@ -154,7 +208,7 @@ function HomeScreen() {
           )}
           {speaking && (
             <TouchableOpacity
-              // onPress={stopSpeaking}
+              onPress={stopSpeaking}
               className="bg-red-400 rounded-3xl p-2 absolute left-10"
             >
               <Text className="text-white font-semibold">Stop</Text>
